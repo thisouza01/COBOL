@@ -44,6 +44,10 @@
                        PERFORM 12-TRANSFERE-VALOR
                    WHEN 2
                        DISPLAY 'DEPOSITO'.
+                       PERFORM 21-ADICIONA-VALOR
+                       
+                   WHEN OTHER
+                       DISPLAY 'OPCAO INVALIDA'.      
 
        3-FINALIZAR.
            DISPLAY 'SALDO CONTA 1: ' WS-BALANCE1.
@@ -54,7 +58,7 @@
            ACCEPT WS-VALOR.
 
            IF WS-VALOR <= 0
-               DISPLAY 'VALOR INVÁLIDO, DIGITE NOVAMENTE: '
+               DISPLAY 'VALOR INVÃLIDO, DIGITE NOVAMENTE: '
                ACCEPT WS-VALOR
            END-IF.
 
@@ -66,4 +70,17 @@
        12-TRANSFERE-VALOR.
            SUBTRACT WS-VALOR FROM WS-BALANCE1
            ADD WS-VALOR TO WS-BALANCE2.
+
+       21-ADICIONA-VALOR.
+           DISPLAY 'QUAL O VALOR DO DEPOSITO? '
+           ACCEPT WS-VALOR.
+           
+           MOVE ZEROS TO WS-OPCAO.
+           DISPLAY 'EM QUAL CONTA? '
+           ACCEPT WS-OPCAO.
+           IF WS-OPCAO = 1
+               ADD WS-VALOR TO WS-BALANCE1
+           ELSE 
+               ADD WS-VALOR TO WS-BALANCE2
+           END-IF.    
       *================================================================*
