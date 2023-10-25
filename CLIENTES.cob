@@ -33,7 +33,7 @@
        WORKING-STORAGE SECTION.
        01 OPCAO            PIC X(01).
        01 MODULO           PIC X(25).
-       01 TECLA            PIC X(01).
+       01 TECLA            PIC X(02).
        01 OPCAO-RELATORIO  PIC X(01).
        01 CLIENTES-STATUS  PIC 9(02).
        01 ERRO             PIC X(30).
@@ -73,8 +73,11 @@
 
        01 MOSTRA-ERRO.
            03 MSGN-ERRO.
-               05 LINE 16 COLUMN 10 PIC X(40) USING ERRO.
-               05 COLUMN PLUS 2     PIC X(01) USING TECLA.
+               05 LINE 16 COLUMN 01 ERASE EOL BACKGROUND-COLOR 3.
+               05 LINE 16 COLUMN 10 PIC X(40) BACKGROUND-COLOR 3
+                   FROM ERRO.
+               05 COLUMN PLUS 2     PIC X(01) BACKGROUND-COLOR 3
+                   USING TECLA.
 
 
 
@@ -88,8 +91,8 @@
        PROCEDURE DIVISION.
       *----------------------------------------------------------------*
        0000-PRINCIPAL SECTION.
-           PERFORM 1000-INICIAR.
-           PERFORM 2000-PROCESSAR.
+           PERFORM 1000-INICIAR THRU 1100-MONTA-TELA.
+           PERFORM 2000-PROCESSAR UNTIL OPCAO EQUAL 'X'.
            PERFORM 3000-FINALIZAR.
            STOP RUN.
 
@@ -101,24 +104,23 @@
                    OPEN I-O CLIENTES
                END-IF.
 
-
-
+       1100-MONTA-TELA.
            DISPLAY TELA.
            ACCEPT MENU.
 
        2000-PROCESSAR.
+           MOVE SPACES TO ERRO.
            EVALUATE OPCAO
                WHEN 1
                    PERFORM 0100-INCLUIR
 
                WHEN 2
-                   CONTINUE
-
+                   PERFORM 0200-CONSULTAR
                WHEN 3
                    CONTINUE
 
                WHEN 4
-                   CONTINUE
+                   PERFORM 0400-EXCLUIR
 
                WHEN 5
                    ACCEPT MENU-RELATORIO
@@ -135,7 +137,8 @@
                    END-IF
 
            END-EVALUATE.
-
+           MOVE SPACES TO OPCAO
+           PERFORM 1100-MONTA-TELA.
       *================================================================*
        3000-FINALIZAR.
            CLOSE CLIENTES.
@@ -149,11 +152,49 @@
            ACCEPT TELA-REGISTRO.
                WRITE CLIENTES-REG
                    INVALID KEY
-                   MOVE 'JA EXISTE ' TO ERRO
+                   MOVE 'JA EXISTE! NOVO REGISTRO?' TO ERRO
                    ACCEPT MOSTRA-ERRO
+                   IF TECLA = 'n' OR TECLA = 'N'
+                       MOVE ZEROS TO CLIENTES-FONE
+                       PERFORM 0100-INCLUIR
+                   END-IF
                END-WRITE.
-               DISPLAY TELA.
-               ACCEPT MENU.
+               PERFORM 1100-MONTA-TELA.
+
+      *----------------------------------------------------------------*
+       0200-CONSULTAR.
+           MOVE 'MODULO - CONSULTAR' TO MODULO.
+           DISPLAY TELA.
+            DISPLAY TELA-REGISTRO.
+            ACCEPT CHAVE.
+             READ CLIENTES
+               INVALID KEY
+               MOVE 'NAO ENCONTRADO' TO ERRO
+               NOT INVALID KEY
+               MOVE 'ENCONTRADO' TO ERRO
+               DISPLAY SS-DADOS
+             END-READ.
+             MOVE SPACES TO CLIENTES-NAME, CLIENTES-EMAIL.
+             ACCEPT MOSTRA-ERRO.
+
+      *----------------------------------------------------------------*
+       0300-ALTERAR.
+
+
+
+
+      *----------------------------------------------------------------*
+       0400-EXCLUIR.
+           MOVE 'MODULO - EXCLUSAO' TO MODULO.
+           DISPLAY TELA.
+           DISPLAY TELA-REGISTRO.
+            ACCEPT CHAVE.
+             READ CLIENTES
+               INVALID KEY
+
+
+
+
 
       *----------------------------------------------------------------*
        0500-RELATORIO-TELA.
