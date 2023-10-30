@@ -1,4 +1,4 @@
-         *================================================================*
+      *================================================================*
        IDENTIFICATION DIVISION.
        PROGRAM-ID. CLIENTES.
       *----------------------------------------------------------------*
@@ -43,7 +43,7 @@
        01 OPCAO-RELATORIO  PIC X(01).
        01 CLIENTES-STATUS  PIC 9(02).
        01 ERRO             PIC X(30).
-   ''  01 CONTA-LINHA      PIC 9(03) VALUE ZEROS.
+       01 CONTA-LINHA      PIC 9(03) VALUE ZEROS.
        01 QT-REGISTROS     PIC 9(04) VALUE ZEROS.
          
        SCREEN SECTION.
@@ -113,6 +113,7 @@
                END-IF.
 
        1100-MONTA-TELA.
+           MOVE 0 TO CONTADOR.
            DISPLAY TELA.
            ACCEPT MENU.
 
