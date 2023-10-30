@@ -232,11 +232,6 @@
                  END-DELETE
              END-IF.
                  
-
-
-
-
-
       *----------------------------------------------------------------*
        0500-RELATORIO-TELA.
            MOVE 'MODULO - RELATORIO' TO MODULO.
