@@ -1,4 +1,4 @@
-      *================================================================*
+         *================================================================*
        IDENTIFICATION DIVISION.
        PROGRAM-ID. CLIENTES.
       *----------------------------------------------------------------*
@@ -14,11 +14,13 @@
 
            SELECT CLIENTES ASSIGN TO 'C:\COBOL\CLIENTES.DAT'
              ORGANIZATION INDEXED
-             ACCESS MODE IS RANDOM
+             ACCESS MODE IS DYNAMIC
              FILE STATUS IS CLIENTES-STATUS
              RECORD KEY CLIENTES-KEY.
 
-
+           SELECT RELATO ASSIGN TO 'C:\COBOL\RELATOS.TXT'
+           ORGANIZATION IS SEQUENTIAL.    
+           
       *================================================================*
        DATA DIVISION.
       *----------------------------------------------------------------*
@@ -29,6 +31,10 @@
                05 CLIENTES-FONE PIC 9(09).
            03 CLIENTES-NAME     PIC X(30).
            03 CLIENTES-EMAIL    PIC X(40).
+           
+       FD RELATO.
+       01 RELATO-REG.
+           03 RELATO-DADOS      PIC X(79).
 
        WORKING-STORAGE SECTION.
        01 OPCAO            PIC X(01).
@@ -37,7 +43,9 @@
        01 OPCAO-RELATORIO  PIC X(01).
        01 CLIENTES-STATUS  PIC 9(02).
        01 ERRO             PIC X(30).
-
+   ''  01 CONTA-LINHA      PIC 9(03) VALUE ZEROS.
+       01 QT-REGISTROS     PIC 9(04) VALUE ZEROS.
+         
        SCREEN SECTION.
        01 TELA.
            03 LIMPA-TELA.
@@ -116,8 +124,9 @@
 
                WHEN 2
                    PERFORM 0200-CONSULTAR
+                   
                WHEN 3
-                   CONTINUE
+                   PERFORM 0300-ALTERAR
 
                WHEN 4
                    PERFORM 0400-EXCLUIR
@@ -179,8 +188,26 @@
 
       *----------------------------------------------------------------*
        0300-ALTERAR.
-
-
+           MOVE 'MODULO - EXCLUSAO' TO MODULO.
+           DISPLAY TELA.
+           DISPLAY TELA-REGISTRO.
+           ACCEPT CHAVE.
+               READ CLIENTES
+               IF CLIENTES-STATUS = 0
+                   ACCEPT SS-DADOS
+                   REWRITE CLIENTES-REG
+                       IF CLIENTES-STATUS = 0
+                           MOVE 'REGISTRO ALTERADO' TO ERRO
+                           ACCEPT MOSTRA-ERRO
+                       ELSE
+                           MOVE 'REGISTRO NAO ALTERADO ' TO ERRO
+                           ACCEPT MOSTRA-ERRO
+                       END-IF   
+               ELSE
+                   MOVE 'REGISTRO NAO ENCONTRADO ' TO ERRO
+                   ACCEPT MOSTRA-ERRO
+               END-IF.    
+                   
 
 
       *----------------------------------------------------------------*
@@ -191,6 +218,20 @@
             ACCEPT CHAVE.
              READ CLIENTES
                INVALID KEY
+                MOVE 'NAO ENCONTRADO' TO ERRO
+               NOT INVALID KEY
+                MOVE 'ENCONTRDO (S/N) ? ' TO ERRO
+                DISPLAY SS-DADOS
+             END-READ.
+             ACCEPT MOSTRA-ERRO.
+             IF TECLA = 'S' AND CLIENTES-STATUS = 0
+                 DELETE CLIENTES
+                 INVALID KEY
+                  MOVE 'NAO EXLUIDO ' TO ERRO
+                  ACCEPT MOSTRA-ERRO
+                 END-DELETE
+             END-IF.
+                 
 
 
 
@@ -198,9 +239,66 @@
 
       *----------------------------------------------------------------*
        0500-RELATORIO-TELA.
-           CONTINUE.
-
+           MOVE 'MODULO - RELATORIO' TO MODULO.
+           ACCEPT CHAVE.
+           DISPLAY TELA.
+           START CLIENTES KEY EQUAL CLIENTES-FONE.
+           READ CLIENTES
+               INVALID KEY
+                   MOVE 'NENHUM REGISTRO ENCONTRADO ' TO ERRO
+               NOT INVALID KEY 
+                   DISPLAY '         RELATORIO DE CLIENTES          '
+                   DISPLAY '----------------------------------------'
+                   
+                   PERFORM UNTIL CLIENTES-STATUS = 10
+                       ADD 1 TO QT-REGISTROS
+                       DISPLAY CLIENTES-FONE ' ' 
+                               CLIENTES-NAME ' '  
+                               CLIENTES-EMAIL    
+                       READ CLIENTES NEXT
+                           ADD 1 TO CONTA-LINHA
+                       IF CONTA-LINHA = 5
+                           ACCEPT MOSTRA-ERRO
+                           MOVE 'PRESSIONE ALGUMA TECLA' TO ERRO
+                           ACCEPT MOSTRA-ERRO
+                           MOVE 'MODULO - RELATORIO' TO MODULO
+                           DISPLAY TELA
+                           DISPLAY '      RELATORIO DE CLIENTES     '
+                           DISPLAY '-----------------------------------'
+                           MOVE 0 TO CONTA-LINHA
+                           
+                       END-IF
+                   END-PERFORM
+                   
+           END-READ.
+           MOVE 'REGISTROS LIDOS ' TO ERRO.
+           MOVE QT-REGISTROS TO ERRO(17:05).
+           ACCEPT MOSTRA-ERRO.    
+           
+              
       *----------------------------------------------------------------*
        0510-RELATORIO-DISCO.
-           CONTINUE.
+           MOVE 'MODULO - RELATORIO' TO MODULO.
+           ACCEPT CHAVE.
+           DISPLAY TELA.
+           START CLIENTES KEY EQUAL CLIENTES-FONE.
+           READ CLIENTES
+           
+               INVALID KEY
+                   MOVE 'NENHUM REGISTRO ENCONTRADO ' TO ERRO
+              
+               NOT INVALID KEY
+               OPEN OUTPUT RELATO
+                   PERFORM UNTIL CLIENTES-STATUS = 10
+                       ADD 1 TO QT-REGISTROS
+                       MOVE CLIENTES-REG TO RELATO-REG
+                       WRITE RELATO-REG
+                       READ CLIENTES NEXT
+                   END-PERFORM
+                   MOVE 'REGISTROS LIDOS ' TO RELATO-REG
+                   MOVE QT-REGISTROS       TO RELATO-REG(18:05) 
+                   WRITE RELATO-REG
+                   CLOSE RELATO
+           END-READ.
+           ACCEPT MOSTRA-ERRO. 
       *================================================================*
