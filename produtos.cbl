@@ -1,10 +1,10 @@
       ******************************************************************
       * Author:
       * Date:
-      * Purpose:Leia um arquivo de produtos com informações como
-      *  código, nome, preço e categoria.
-      *  Gere um relatório que mostre quantos produtos pertencem a
-      *  cada categoria. No final do relatório, exiba o total de
+      * Purpose:Leia um arquivo de produtos com informaÃ§Ãµes como
+      *  cÃ³digo, nome, preÃ§o e categoria.
+      *  Gere um relatÃ³rio que mostre quantos produtos pertencem a
+      *  cada categoria. No final do relatÃ³rio, exiba o total de
       *  produtos por categoria e o valor total de estoque para cada
       *  categoria.
       * Tectonics: cobc
@@ -58,6 +58,11 @@
                05 WS-QNT-ELETRONICO   PIC 9(08)V99 VALUE ZERO.
                05 WS-QNT-HIGIENE      PIC 9(08)V99 VALUE ZERO.
 
+           01 QNT-ESTOQUE-EDITED.
+               05 EDIT-QNT-ALIMENTO   PIC ZZZ,ZZ9.9(02) BLANK WHEN ZERO.
+               05 EDIT-QNT-ELETRONICO PIC ZZZ,ZZ9.9(02) BLANK WHEN ZERO.
+               05 EDIT-QNT-HIGIENE    PIC ZZZ,ZZ9.9(02) BLANK WHEN ZERO.
+
        PROCEDURE DIVISION.
        MAIN-PROCEDURE.
 
@@ -105,13 +110,17 @@
 
             END-IF
 
+            MOVE WS-QNT-ALIMENTO TO EDIT-QNT-ALIMENTO.
+            MOVE WS-QNT-ELETRONICO TO EDIT-QNT-ELETRONICO.
+            MOVE WS-QNT-HIGIENE TO EDIT-QNT-HIGIENE.
+       
             DISPLAY 'QUANTIDADE POR CATEGORIA E VALOR TOTAL ESTOQUE'
             DISPLAY 'Alimentos: 'WS-CONT-ALIMENTO
-            DISPLAY 'Valor estoque Alimentos: 'WS-QNT-ALIMENTO
+            DISPLAY 'Valor estoque Alimentos: 'EDIT-QNT-ALIMENTO
             DISPLAY 'Eletronicos: 'WS-CONT-ELETRONICO
-            DISPLAY 'Valor estoque Eletronicos: 'WS-QNT-ELETRONICO
+            DISPLAY 'Valor estoque Eletronicos: 'EDIT-QNT-ELETRONICO
             DISPLAY 'Higiene: 'WS-CONT-HIGIENE
-            DISPLAY 'Valor estoque Higiene: 'WS-QNT-HIGIENE
+            DISPLAY 'Valor estoque Higiene: 'EDIT-QNT-HIGIENE
 
             CLOSE PRODUTOS.
 
