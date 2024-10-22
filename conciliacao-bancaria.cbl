@@ -54,6 +54,8 @@
                05 EOF2                 PIC X(01) VALUE 'N'.
                05 COMP-TRAN            PIC X(01) VALUE 'N'.
                05 SALDO-ESPERADO       PIC 9(05)V99 VALUE ZEROS.
+               05 SALDO-REAL           PIC 9(05)V99 VALUE ZEROS.
+               05 WS-TRANSID-O         PIC X(04).
 
            01 WS-STATUS.
                05 WS-FS-TRANS          PIC 9(02).
@@ -65,7 +67,7 @@
       * LENDO O ARQUIVO PARA LER O CABEÇALHO ANTES, PRECISO ENTENDER
       *  COMO TIRAR O CABEÇALHO SEM FAZER ISSO
            PERFORM 0200-LE-ARQUIVO1 THRU 0210-LE-ARQUIVO2-EXIT 2 TIMES.
-      * VERIFICA SE CHEGOU AO FINAL DOS DOIS ARQUIVOS     
+      * VERIFICA SE CHEGOU AO FINAL DOS DOIS ARQUIVOS
            PERFORM UNTIL EOF1 = 'Y' AND EOF2 = 'Y'
                IF EOF1 = 'N'
                    PERFORM 0300-UNSTRING-ARQUIVO1
@@ -73,10 +75,10 @@
                IF EOF2 = 'N'
                    PERFORM 0310-UNSTRING-ARQUIVO2
                END-IF
-               
+
                PERFORM 0400-COMPARA-TRANSACAO
                PERFORM 0500-CALCULA-SALDO-ESP
-               
+
                IF EOF1 = 'N'
                    PERFORM 0200-LE-ARQUIVO1
                END-IF
@@ -84,7 +86,7 @@
                    PERFORM 0210-LE-ARQUIVO2
                END-IF
            END-PERFORM.
-               
+           PERFORM 0600-MOSTRA-DIVERGENTE.    
            PERFORM 1000-FECHA-ARQUIVO THRU 1000-FECHA-ARQUIVO-EXIT.
 
            STOP RUN.
@@ -98,9 +100,9 @@
                    AT END
                    MOVE 'Y' TO EOF1
                END-READ
-           END-IF.    
+           END-IF.
        0200-LE-ARQUIVO1-EXIT. EXIT.
-       
+
        0210-LE-ARQUIVO2.
            IF WS-FS-EXTRATO = 00
                READ EXTRATO-BANCO INTO WS-REGISTRO2
@@ -136,20 +138,33 @@
        0400-COMPARA-TRANSACAO.
       * WS-TRANSID(2:3) POR QUE ELE COMECA COM UM T. EX: T001 E A
       *  VERIFICAÇÃO DO ID É APENAS OS NUMEROS
-           IF WS-TRANSID(2:3) NOT EQUAL WS-IDBANCO
+           EVALUATE WS-TRANSID(2:3)
+           WHEN = WS-IDBANCO
+               DISPLAY 'TRANSACAO: 'WS-TRANSID
+               ADD WS-VALOR2 TO SALDO-REAL
+               DISPLAY 'SALDO REAL DA 'WS-TRANSID' E: 'SALDO-REAL
+               MOVE ZEROS TO SALDO-REAL
+           WHEN NOT = WS-IDBANCO
                DISPLAY 'TRASACAO INEXISTENTE'
                DISPLAY 'WS-TRANSID: 'WS-TRANSID
                MOVE 'Y' TO COMP-TRAN
-           END-IF.
+               MOVE WS-TRANSID TO WS-TRANSID-O
+           END-EVALUATE.
        0400-COMPARA-TRANSACAO-EXIT. EXIT.
 
        0500-CALCULA-SALDO-ESP.
-           IF COMP-TRAN = 'Y'
+           IF COMP-TRAN = 'Y'        
                ADD WS-VALOR1 TO SALDO-ESPERADO
                DISPLAY 'SALDO-ESPERADO: 'SALDO-ESPERADO
                MOVE 'N' TO COMP-TRAN
            END-IF.
        0500-CALCULA-SALDO-ESP-EXIT. EXIT.
+       
+       0600-MOSTRA-DIVERGENTE.
+           DISPLAY 'Transacoes Divergentes'.
+           DISPLAY 'Numero da transacao: 'WS-TRANSID-O.
+           DISPLAY 'Valor esperado da transacao: 'SALDO-ESPERADO.
+       0600-MOSTRA-DIVERGENTE-EXIT. EXIT.    
 
        1000-FECHA-ARQUIVO.
            CLOSE TRANS-BANCO, EXTRATO-BANCO.
