@@ -1,12 +1,12 @@
       ******************************************************************
       * Author:
       * Date:
-      * Purpose: Dado dois arquivos, um com transações bancárias e
-      *  outro com o extrato de um banco, leia ambos e gere um relatório
-      *  de conciliação que liste as transações não conciliadas. Exiba
-      *  a diferença encontrada entre o saldo esperado (calculado a
-      *  partir das transações) e o saldo real informado no extrato
-      *  bancário. Ao final, gere um relatório com as transações
+      * Purpose: Dado dois arquivos, um com transaÃ§Ãµes bancÃ¡rias e
+      *  outro com o extrato de um banco, leia ambos e gere um relatÃ³rio
+      *  de conciliaÃ§Ã£o que liste as transaÃ§Ãµes nÃ£o conciliadas. Exiba
+      *  a diferenÃ§a encontrada entre o saldo esperado (calculado a
+      *  partir das transaÃ§Ãµes) e o saldo real informado no extrato
+      *  bancÃ¡rio. Ao final, gere um relatÃ³rio com as transaÃ§Ãµes
       *  divergentes.
       * Tectonics: cobc
       ******************************************************************
@@ -52,8 +52,8 @@
            01 AUX.
                05 EOF1                 PIC X(01) VALUE 'N'.
                05 EOF2                 PIC X(01) VALUE 'N'.
-               05 CABECALHO1-LIDO      PIC X(05) VALUE 'FALSE'.
-               05 CABECALHO2-LIDO      PIC X(05) VALUE 'FALSE'.
+               05 COMP-TRAN            PIC X(01) VALUE 'N'.
+               05 SALDO-ESPERADO       PIC 9(05)V99 VALUE ZEROS.
 
            01 WS-STATUS.
                05 WS-FS-TRANS          PIC 9(02).
@@ -62,7 +62,29 @@
        PROCEDURE DIVISION.
        MAIN-PROCEDURE.
            PERFORM 0100-ABRE-ARQUIVO THRU 0100-ABRE-ARQUIVO-EXIT.
-           PERFORM 0200-LE-ARQUIVO UNTIL EOF2 = 'Y'.
+      * LENDO O ARQUIVO PARA LER O CABEÃ‡ALHO ANTES, PRECISO ENTENDER
+      *  COMO TIRAR O CABEÃ‡ALHO SEM FAZER ISSO
+           PERFORM 0200-LE-ARQUIVO1 THRU 0210-LE-ARQUIVO2-EXIT 2 TIMES.
+      * VERIFICA SE CHEGOU AO FINAL DOS DOIS ARQUIVOS     
+           PERFORM UNTIL EOF1 = 'Y' AND EOF2 = 'Y'
+               IF EOF1 = 'N'
+                   PERFORM 0300-UNSTRING-ARQUIVO1
+               END-IF
+               IF EOF2 = 'N'
+                   PERFORM 0310-UNSTRING-ARQUIVO2
+               END-IF
+               
+               PERFORM 0400-COMPARA-TRANSACAO
+               PERFORM 0500-CALCULA-SALDO-ESP
+               
+               IF EOF1 = 'N'
+                   PERFORM 0200-LE-ARQUIVO1
+               END-IF
+               IF EOF2 = 'N'
+                   PERFORM 0210-LE-ARQUIVO2
+               END-IF
+           END-PERFORM.
+               
            PERFORM 1000-FECHA-ARQUIVO THRU 1000-FECHA-ARQUIVO-EXIT.
 
            STOP RUN.
@@ -70,39 +92,22 @@
            OPEN INPUT TRANS-BANCO, EXTRATO-BANCO.
        0100-ABRE-ARQUIVO-EXIT. EXIT.
 
-       0200-LE-ARQUIVO.
-
-           IF WS-FS-TRANS = 00 AND WS-FS-EXTRATO = 00
+       0200-LE-ARQUIVO1.
+           IF WS-FS-TRANS = 00
                READ TRANS-BANCO INTO WS-REGISTRO1
-                   AT END MOVE 'Y' TO EOF1
-                   NOT AT END
-                   IF CABECALHO1-LIDO = 'FALSE'
-                       MOVE 'Y' TO CABECALHO1-LIDO
-                   ELSE
-                       PERFORM 0300-UNSTRING-ARQUIVO1
-                       DISPLAY WS-TRANSID
-                       DISPLAY WS-DATE1
-                       DISPLAY WS-VALOR1
-                       DISPLAY WS-TIPO1
-                       DISPLAY WS-CNTCORRENTE1
-                   END-IF
+                   AT END
+                   MOVE 'Y' TO EOF1
                END-READ
-
-
-      * AMBOS OS JEITOS FUNCIONARAM, INTERESSANTE
+           END-IF.    
+       0200-LE-ARQUIVO1-EXIT. EXIT.
+       
+       0210-LE-ARQUIVO2.
+           IF WS-FS-EXTRATO = 00
                READ EXTRATO-BANCO INTO WS-REGISTRO2
                    AT END MOVE 'Y' TO EOF2
                END-READ
-
-               PERFORM 0310-UNSTRING-ARQUIVO2
-               IF CABECALHO2-LIDO = 'FALSE'
-                   MOVE 'Y' TO CABECALHO2-LIDO
-               ELSE
-                   DISPLAY WS-REGISTRO2
-                   DISPLAY '-----------------'
-               END-IF
            END-IF.
-       0200-LE-ARQUIVO-EXIT. EXIT.
+       0210-LE-ARQUIVO2-EXIT. EXIT.
 
        0300-UNSTRING-ARQUIVO1.
            UNSTRING REGISTRO1
@@ -127,6 +132,24 @@
                    WS-IDBANCO
            END-UNSTRING.
        0300-UNSTRING-ARQUIVO2-EXIT. EXIT.
+
+       0400-COMPARA-TRANSACAO.
+      * WS-TRANSID(2:3) POR QUE ELE COMECA COM UM T. EX: T001 E A
+      *  VERIFICAÃ‡ÃƒO DO ID Ã‰ APENAS OS NUMEROS
+           IF WS-TRANSID(2:3) NOT EQUAL WS-IDBANCO
+               DISPLAY 'TRASACAO INEXISTENTE'
+               DISPLAY 'WS-TRANSID: 'WS-TRANSID
+               MOVE 'Y' TO COMP-TRAN
+           END-IF.
+       0400-COMPARA-TRANSACAO-EXIT. EXIT.
+
+       0500-CALCULA-SALDO-ESP.
+           IF COMP-TRAN = 'Y'
+               ADD WS-VALOR1 TO SALDO-ESPERADO
+               DISPLAY 'SALDO-ESPERADO: 'SALDO-ESPERADO
+               MOVE 'N' TO COMP-TRAN
+           END-IF.
+       0500-CALCULA-SALDO-ESP-EXIT. EXIT.
 
        1000-FECHA-ARQUIVO.
            CLOSE TRANS-BANCO, EXTRATO-BANCO.
