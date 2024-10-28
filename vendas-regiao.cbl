@@ -1,15 +1,15 @@
       ******************************************************************
       * Author:
       * Date:
-      * Purpose: Ler um arquivo sequencial contendo informações de
-      *  vendas de diferentes lojas, consolidar os dados por região
-      *  e gerar um relatório com o total de vendas, média e número de
-      *  transações por região.
-      * Inclua um critério que permita gerar o relatório apenas para
-      *  regiões com mais de um determinado valor em vendas ou número
-      *  de transações
-      * Marque regiões onde o total de vendas ultrapassa um certo
-      *  limite como “Regiões de Alta Venda”.
+      * Purpose: Ler um arquivo sequencial contendo informaÃ§Ãµes de
+      *  vendas de diferentes lojas, consolidar os dados por regiÃ£o
+      *  e gerar um relatÃ³rio com o total de vendas, mÃ©dia e nÃºmero de
+      *  transaÃ§Ãµes por regiÃ£o.
+      * Inclua um critÃ©rio que permita gerar o relatÃ³rio apenas para
+      *  regiÃµes com mais de um determinado valor em vendas ou nÃºmero
+      *  de transaÃ§Ãµes
+      * Marque regiÃµes onde o total de vendas ultrapassa um certo
+      *  limite como â€œRegiÃµes de Alta Vendaâ€.
       * Tectonics: cobc
       ******************************************************************
        IDENTIFICATION DIVISION.
@@ -71,7 +71,7 @@
                END-IF
            END-PERFORM.
            PERFORM 0550-MEDIA-REGIAO.
-           PERFORM 0600-MOSTRA-VALOR-REGIAO.
+           PERFORM 0590-FILTRA-REGIOES.
            PERFORM 1000-FECHA-REGISTRO.
             STOP RUN.
 
@@ -120,26 +120,59 @@
 
        0550-MEDIA-REGIAO.
            COMPUTE MEDIA-NORTE = VALOR-NORTE / CNT-NORTE.
-           COMPUTE MEDIA-SUL = VALOR-SUL / CNT-SUL.
+           COMPUTE MEDIA-SUL   = VALOR-SUL   / CNT-SUL.
            COMPUTE MEDIA-LESTE = VALOR-LESTE / CNT-LESTE.
            COMPUTE MEDIA-OESTE = VALOR-OESTE / CNT-OESTE.
+           
+       0590-FILTRA-REGIOES.
+           PERFORM 0591-FILTRA-REGIAO-NORTE.
+           PERFORM 0591-FILTRA-REGIAO-SUL.
+           PERFORM 0591-FILTRA-REGIAO-LESTE.
+           PERFORM 0591-FILTRA-REGIAO-OESTE.           
+           
+       0591-FILTRA-REGIAO-NORTE.    
+           IF VALOR-NORTE > 1000 OR CNT-NORTE > 6
+               PERFORM 0600-MOSTRA-REGIAO-NORTE
+           END-IF.   
+       
+       0591-FILTRA-REGIAO-SUL. 
+           IF VALOR-SUL > 1000 OR CNT-SUL > 1
+               PERFORM 0610-MOSTRA-REGIAO-SUL
+           END-IF.
+        
+       0591-FILTRA-REGIAO-LESTE.              
+           IF VALOR-LESTE > 800 OR CNT-LESTE > 5
+               PERFORM 0620-MOSTRA-REGIAO-LESTE
+           END-IF.
+       
+       0591-FILTRA-REGIAO-OESTE. 
+           IF VALOR-OESTE > 5110 OR CNT-OESTE > 2
+               PERFORM 0630-MOSTRA-REGIAO-OESTE
+           END-IF.
+             
 
-       0600-MOSTRA-VALOR-REGIAO.
+       0600-MOSTRA-REGIAO-NORTE.
            DISPLAY 'REGIAO NORTE'
            DISPLAY 'QUANTIDADE DE VENDAS: 'CNT-NORTE.
            DISPLAY 'VALOR DAS VENDAS: 'VALOR-NORTE.
            DISPLAY 'MEDIA: 'MEDIA-NORTE.
            DISPLAY '----------------------------------------'.
+           
+       0610-MOSTRA-REGIAO-SUL.    
            DISPLAY 'REGIAO SUL'
            DISPLAY 'QUANTIDADE DE VENDAS: 'CNT-SUL.
            DISPLAY 'VALOR DAS VENDAS: 'VALOR-SUL.
            DISPLAY 'MEDIA: 'MEDIA-SUL.
            DISPLAY '----------------------------------------'.
+           
+       0620-MOSTRA-REGIAO-LESTE.
            DISPLAY 'REGIAO LESTE'
            DISPLAY 'QUANTIDADE DE VENDAS: 'CNT-LESTE.
            DISPLAY 'VALOR DAS VENDAS: 'VALOR-LESTE.
            DISPLAY 'MEDIA: 'MEDIA-LESTE.
            DISPLAY '----------------------------------------'.
+           
+       0630-MOSTRA-REGIAO-OESTE.
            DISPLAY 'REGIAO OESTE'
            DISPLAY 'QUANTIDADE DE VENDAS: 'CNT-OESTE.
            DISPLAY 'VALOR DAS VENDAS: 'VALOR-OESTE.
