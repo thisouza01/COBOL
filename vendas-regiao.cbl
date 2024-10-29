@@ -79,9 +79,11 @@
            OPEN INPUT VENDAS-REGIAO.
 
        0200-LE-ARQUIVO.
-           READ VENDAS-REGIAO INTO WS-REGISTRO
-               AT END MOVE 'Y' TO EOF
-           END-READ.
+           IF FS-VENDAS = 00
+                READ VENDAS-REGIAO INTO WS-REGISTRO
+                    AT END MOVE 'Y' TO EOF
+                END-READ
+           END-IF.
 
        0300-UNSTRING-REGISTRO.
            UNSTRING REGISTRO
